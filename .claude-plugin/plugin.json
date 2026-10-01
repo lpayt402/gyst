@@ -1,0 +1,7 @@
+{
+  "name": "gyst",
+  "version": "0.1.0",
+  "description": "Turn fragmented organizational information into a traceable environment map.",
+  "author": {"name": "Lee Payton"},
+  "repository": "https://github.com/lpayt402/gyst"
+}

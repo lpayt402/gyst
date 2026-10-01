@@ -1,0 +1,7 @@
+{
+  "name": "gyst-marketplace",
+  "owner": {"name": "Lee Payton"},
+  "plugins": [
+    {"name": "gyst", "source": "./", "description": "Get Your Shit Together: evidence-first environment mapping."}
+  ]
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "GYST"
+  short_description: "Map messy organizational knowledge with evidence"
+  default_prompt: "Use $gyst to map my approved source folder, preserve provenance, and surface the most important unanswered questions."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,3 @@
+ticket_id,opened,application,summary,status,assignee,target_date,asset_reference
+SD-1842,2026-09-10,BenchBoard,Retire the shared counter login and confirm MFA for assigned staff,In Progress,IT Service Desk,2026-09-30,Front counter tablet
+SD-1889,2026-09-12,BenchBoard,Replace cracked tablet before changing the counter login,Open,,2026-10-03,Front counter tablet
