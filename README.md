@@ -2,7 +2,7 @@
 
 ## Get Your Shit Together.
 
-I built GYST for the point where a policy, an old wiki page, a ticket export, and a handoff note do not quite agree. It helps me keep those sources intact, map what each one says, and list the questions that still need an answer. It does not decide which source is authoritative on its own.
+GYST supports reviewing a policy, an old wiki page, a ticket export, and a handoff note when they do not quite agree. It helps keep those sources intact, map what each one says, and list the questions that still need an answer. It does not decide which source is authoritative on its own.
 
 **v0.1.0 — working skill and local helpers, not an autonomous hosted platform.** Your agent does the reasoning; the included code does inventory, retrieval, evidence checks, revision-controlled integration, and reporting. No database, API key, or additional Python package is required by the helpers.
 

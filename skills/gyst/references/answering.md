@@ -26,6 +26,8 @@ A reported answer can resolve a documentation ambiguity while leaving implementa
 
 ## Examples
 
+These are hypothetical response patterns. Use the dates, roles, and findings from the actual reviewed sources; do not treat this wording as evidence about an environment.
+
 **Who owns remediation?** “Unresolved. The 2024 wiki assigns Security, while the 2026 handoff note says Infrastructure handles execution. A split between accountability and execution is plausible but not established. Ask for the approved RACI and effective date.” Cite both originals.
 
 **Which systems rely on AD?** List only explicitly supported relationships, separate possible aliases, and name the corpus boundary. Do not conflate Entra ID, an on-premises AD domain, and a separate cloud tenant because they share a vendor.
