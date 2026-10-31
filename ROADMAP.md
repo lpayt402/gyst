@@ -4,7 +4,7 @@ Ship the evidence loop before a platform. Everything below is planned unless exp
 
 ## 1. Prove the real-host workflow
 
-Run the unseeded synthetic environment in Claude Code and Codex. Confirm link-based installation, actual skill discovery, complete installed references, scoped source approval, safe checkpoint/resume, cited answers, contradiction retention, and refusal to obey the injected note. Diagnose the GitHub Actions failure and obtain observed results across the configured OS/Python matrix.
+Run the unseeded synthetic environment in Claude Code and Codex. Confirm link-based installation, actual skill discovery, complete installed references, scoped source approval, safe checkpoint/resume, cited answers, contradiction retention, and refusal to obey the injected note. Record observed results across the configured OS/Python matrix.
 
 Acceptance: reproducible records of the host/version/model/commit, passing discovery and invocation, unchanged source bytes, valid original-source citations, no unsupported implementation claims, no cross-scope identity merges, and a useful bounded clarification queue. Failures stay in the evaluation record; do not tune the rubric after seeing results.
 
