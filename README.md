@@ -1,10 +1,8 @@
-# GYST
-
-## Get Your Shit Together.
+# GYST: Make sense of scattered documents
 
 GYST supports reviewing a policy, an old wiki page, a ticket export, and a handoff note when they do not quite agree. It helps keep those sources intact, map what each one says, and list the questions that still need an answer. It does not decide which source is authoritative on its own.
 
-**v0.1.0 — working skill and local helpers, not an autonomous hosted platform.** Your agent does the reasoning; the included code does inventory, retrieval, evidence checks, revision-controlled integration, and reporting. No database, API key, or additional Python package is required by the helpers.
+**v0.1.0. Working skill and local helpers, not an autonomous hosted platform.** Your agent does the reasoning; the included code does inventory, retrieval, evidence checks, revision-controlled integration, and reporting. No database, API key, or additional Python package is required by the helpers.
 
 ## Install by giving your agent a link
 
@@ -17,7 +15,7 @@ Use user scope, preserve my existing configuration, verify installation,
 and stop before reading any organizational documents.
 ```
 
-This candidate is intended for a private repository. The receiving agent needs authorized repository access; a link does not change permissions or install tools into an ordinary chat session. [Full installation instructions](INSTALL.md).
+Install through a host that can read this repository and write to your chosen installation directory. A link does not install tools into an ordinary chat session. [Full installation instructions](INSTALL.md).
 
 **Claude Code plugin:**
 
@@ -96,7 +94,7 @@ The included helper reads and writes local files and does not call a model, conn
 ## Where everything lives
 
 ```text
-GYST/                         # Framework repository — no real organizational data
+GYST/                         # Framework repository; no real organizational data
 ├── INSTALL.md                # Link-to-install playbook
 ├── AGENTS.md                 # Instructions for developing this framework
 ├── install.py                # Dry-run-first standalone installer
@@ -131,5 +129,9 @@ The helpers search UTF-8 text formats. PDF, Office documents, and common images 
 **Local files do not mean local inference.** A cloud agent may receive file contents and tool output. Approve that boundary before processing work data. Keep source material and generated maps out of this framework repository. GYST is not an access-control engine or a compliance certification.
 
 [Usage](docs/USAGE.md) · [Host compatibility](docs/HOSTS.md) · [Architecture](docs/ARCHITECTURE.md) · [Security](SECURITY.md) · [Roadmap](ROADMAP.md) · [Validation](VALIDATION.md)
+
+## About the name
+
+GYST stands for Get Your Shit Together.
 
 License: MIT. Copyright 2026 GYST contributors.
