@@ -86,6 +86,21 @@ python3 examples/demo.py --workspace ../gyst-demo
 
 On Windows, use `py -3` instead of `python3`. The demo requires a new or empty output directory. It generates `../gyst-demo/reports/overview.md` from a **seeded reference map**. It tests the pipeline, not an agent's extraction ability. For a separate extraction trial, use the fictional scattered-information example in [the unseeded evaluation](examples/access-review/EXPECTED.md). Do not give the expected findings to the agent before it has made its map.
 
+## Try the GYST 2.0 prototype
+
+From a Bash shell at the repository root, use a fresh workspace with the same fictional BenchBoard records:
+
+```bash
+w=$(mktemp -d)
+python3 examples/demo.py --workspace "$w"
+gyst() { python3 skills/gyst/scripts/gyst.py "$@"; }
+gyst goal-start "$w" review ent-benchboard "Was the shared account retired?" --budget 9
+gyst goal-run "$w" review --steps 4
+gyst goal-run "$w" review --steps 9
+gyst trace "$w" clm-exception-decision
+```
+
+The first run saves its next step. The second resumes and returns proposed findings and open questions. Trace shows both sides of the decision dispute and their source locators. [Full demo and limitations](docs/GOAL-PROTOTYPE.md).
 
 ## Data boundary
 

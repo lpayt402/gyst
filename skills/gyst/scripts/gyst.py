@@ -436,11 +436,257 @@ def report(path):
     return {"report": str(work / "reports/overview.md"), "warnings": result["warnings"]}
 
 
+
+# Separate from the v0.1 workspace and knowledge schemas.
+GOAL_VERSION = 1
+GOAL_MAX_BYTES = 1_048_576
+GOAL_MAX_UNITS = 200
+
+
+def investigation_inputs(path):
+    work, config, root = workspace(path)
+    raw_map = read_bytes(no_links(work / "map/knowledge.json"), GOAL_MAX_BYTES)
+    raw_manifest = read_bytes(no_links(work / ".gyst/manifest.json"), GOAL_MAX_BYTES)
+    manifest = json.loads(raw_manifest)
+    if manifest["root"] != str(root):
+        raise ValueError("Manifest scope differs from configuration")
+    sources = {row["id"]: row for row in manifest["sources"]}
+    if len(sources) != len(manifest["sources"]):
+        raise ValueError("Duplicate source IDs")
+    model = json.loads(raw_map)
+    schema = load(SCHEMA)
+    if shape(model, schema, schema) or SECRET_TEXT.search(raw_map.decode("utf-8")):
+        raise ValueError("Invalid or sensitive canonical map; review it before investigating")
+    ids = [r["id"] for group in ("entities", "claims", "questions") for r in model[group]]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Duplicate knowledge IDs")
+    revision = {"map": digest(raw_map), "manifest": digest(raw_manifest)}
+    return work, root, min(config["max_file_bytes"], GOAL_MAX_BYTES), sources, model, revision
+
+
+def support(root, sources, limit, evidence):
+    row = sources.get(evidence["source_id"])
+    result = {key: evidence[key] for key in ("source_id", "sha256", "method", "locator")}
+    result.update(path=row["path"] if row else None, checked_at=now(), status="unavailable")
+    if not row or row["status"] == "missing":
+        return {**result, "status": "missing"}
+    if row["status"] not in {"ready", "needs_extraction"}:
+        return result
+    if row["sha256"] != evidence["sha256"]:
+        return {**result, "status": "stale"}
+    if row["bytes"] > limit:
+        return {**result, "status": "over_byte_limit"}
+    try:
+        raw = read_bytes(source_path(root, row["path"]), limit)
+        if digest(raw) != evidence["sha256"]:
+            return {**result, "status": "stale"}
+        if evidence["method"] == "native" and row["status"] == "needs_extraction":
+            return {**result, "status": "native_locator_unverified"}
+        if evidence["method"] != "text" or row["status"] != "ready":
+            return {**result, "status": "invalid_locator"}
+        content = raw.decode("utf-8-sig")
+        if SECRET_TEXT.search(content):
+            return result
+    except FileNotFoundError:
+        return {**result, "status": "missing"}
+    except (OSError, ValueError):
+        return result
+    match = re.fullmatch(r"L([1-9][0-9]*)-L([1-9][0-9]*)", evidence["locator"])
+    if match:
+        start, end = map(int, match.groups())
+        lines = content.splitlines()
+        if 1 <= start <= end <= len(lines) and evidence.get("quote", "") in "\n".join(lines[start - 1:end]):
+            return {**result, "status": "citation_verified"}
+    return {**result, "status": "invalid_locator"}
+
+
+def touches(claim, entity):
+    return claim["subject"] == entity or claim["object"] == {"kind": "entity", "value": entity}
+
+
+def claim_view(claim):
+    return {key: value for key, value in claim.items() if key != "evidence"} | {
+        "interpretation": "requirement" if claim["predicate"] == "requires" else "source_statement"
+    }
+
+
+def trace(path, record_id):
+    _, root, limit, sources, model, revision = investigation_inputs(path)
+    matching = [claim for claim in model["claims"] if claim["id"] == record_id or touches(claim, record_id)]
+    if not matching and not any(row["id"] == record_id for row in model["entities"]):
+        raise ValueError("Trace needs a known entity or claim ID")
+    primary = {claim["id"] for claim in matching}
+    adjacent = primary | {linked for claim in matching for linked in claim["contradicts"]}
+    selected = [c for c in model["claims"] if c["id"] in adjacent or primary.intersection(c["contradicts"])]
+    related_ids = {record_id, *(claim["id"] for claim in selected)}
+    if sum(len(c["evidence"]) for c in selected) > GOAL_MAX_UNITS:
+        raise ValueError("Trace exceeds 200 citations; select a narrower claim")
+    return {
+        "anchor": record_id, "revision": revision,
+        "warning": "Citation checks verify version and locator. Claim statements remain attributed.",
+        "claims": [
+            {**claim_view(c), "reason": "anchor or incident relationship" if c["id"] in primary else "contradiction link",
+             "support": [support(root, sources, limit, e) for e in c["evidence"]]}
+            for c in selected
+        ],
+        "questions": [q for q in model["questions"] if related_ids.intersection(q["related_ids"])],
+    }
+
+
+def goal_file(work, name):
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,39}", name):
+        raise ValueError("Goal name must be 1–40 lowercase letters, digits, or hyphens")
+    return no_links(work / ".gyst/goals" / (name + ".json"))
+
+
+def goal_start(path, name, entity, question, budget, predicates):
+    work, _, _ = workspace(path)
+    if not question.strip() or len(question) > 400 or SECRET_TEXT.search(question):
+        raise ValueError("Provide a non-sensitive question of 1–400 characters")
+    if len(predicates) > 8 or any(not p.strip() or len(p) > 80 or SECRET_TEXT.search(p) for p in predicates):
+        raise ValueError("Supply up to eight non-sensitive predicates of 1–80 characters")
+    target = goal_file(work, name)
+    with lock(work):
+        if target.exists():
+            raise ValueError("Goal already exists; use goal-run to resume")
+        _, _, _, _, model, revision = investigation_inputs(work)
+        if not any(row["id"] == entity for row in model["entities"]):
+            raise ValueError("Choose a known canonical entity ID")
+        board = {
+            "version": GOAL_VERSION, "goal": question, "entity": entity, "predicates": predicates,
+            "revision": revision, "budget": budget, "spent": 0, "discovered": 0,
+            "phase": "discover", "primary": [], "linked": [], "checks": [],
+            "claim_cursor": 0, "citation_cursor": 0, "link_cursor": 0,
+            "next": {"action": "discover", "why": "Find mapped claims incident to the chosen entity and matching the requested predicates."},
+            "related_questions": [],
+        }
+        write(target, board)
+    return goal_result(board)
+
+
+def goal_result(board):
+    finished = board["phase"] == "done"
+    exhausted = board["spent"] >= board["budget"]
+    status = "completed" if finished else "paused"
+    findings = board["checks"]
+    unresolved = [q["question"] for q in board["related_questions"] if q["state"] != "resolved"]
+    if not finished and exhausted:
+        status = "budget_exhausted"
+        unresolved.append("Total work budget exhausted. The board shows the first unchecked step.")
+    elif not finished:
+        unresolved.append("Investigation paused. The board shows the next step.")
+    elif not findings:
+        unresolved.append("No matching mapped claims were found for the selected entity and predicates.")
+    return {
+        "status": status, "board": board,
+        "answer": {
+            "status": "proposed",
+            "summary": "The cited map records the statements below. Implementation remains unverified by this investigation." if findings else "No sourced statement checked yet.",
+            "findings": [
+                {"claim_id": row["id"], "statement": row["statement"], "interpretation": row["interpretation"],
+                 "state": row["state"], "support": row["support"]}
+                for row in findings
+            ],
+            "citation_note": "Saved observations describe the check time. Use trace to check current sources.",
+            "unresolved": unresolved,
+        },
+    }
+
+
+def goal_show(path, name):
+    work, _, _ = workspace(path)
+    board = load(goal_file(work, name))
+    if board["version"] != GOAL_VERSION:
+        raise ValueError("Unsupported goal board version")
+    return goal_result(board)
+
+
+def plan_goal(board, claims, questions):
+    phase = board["phase"]
+    if phase == "done":
+        return
+    if phase == "discover":
+        if board["discovered"] < len(claims):
+            board["next"] = {
+                "action": "discover", "claim_id": claims[board["discovered"]]["id"],
+                "why": "Check whether this mapped claim matches the entity and requested predicates.",
+            }
+            return
+        board["phase"] = "links" if board["primary"] else "done"
+    if board["phase"] == "links":
+        if board["link_cursor"] < len(claims):
+            board["next"] = {
+                "action": "link", "claim_id": claims[board["link_cursor"]]["id"],
+                "why": "Check both directions of contradiction links to retain competing statements.",
+            }
+            return
+        board["phase"] = "cite"
+    order = board["primary"] + board["linked"]
+    if board["phase"] == "cite" and board["claim_cursor"] < len(order):
+        cid = order[board["claim_cursor"]]
+        board["next"] = {
+            "action": "check_citation", "claim_id": cid, "citation": board["citation_cursor"] + 1,
+            "why": "Verify the version and locator of a conflicting statement." if cid in board["linked"]
+            else "Verify the version and locator before using this matching claim.",
+        }
+        return
+    board["phase"] = "done"
+    relevant = set(order) | {board["entity"]}
+    board["related_questions"] = [q for q in questions if relevant.intersection(q["related_ids"])]
+    board["next"] = None
+
+
+def goal_run(path, name, steps):
+    work, _, _ = workspace(path)
+    target = goal_file(work, name)
+    with lock(work):
+        _, root, limit, sources, model, revision = investigation_inputs(work)
+        board = goal_show(work, name)["board"]
+        if revision != board["revision"]:
+            raise ValueError("Map or inventory changed since this goal started; inspect the saved board or start a new goal")
+        claims = model["claims"]
+        by_id = {c["id"]: c for c in claims}
+        if board["spent"] == 0:
+            plan_goal(board, claims, model["questions"])
+            if not board["next"]:
+                write(target, board)
+        for _ in range(steps):
+            if not board["next"] or board["spent"] >= board["budget"]:
+                break
+            action = board["next"]["action"]
+            claim = by_id[board["next"]["claim_id"]]
+            cid = claim["id"]
+            if action == "discover":
+                if touches(claim, board["entity"]) and (not board["predicates"] or claim["predicate"] in board["predicates"]):
+                    board["primary"].append(cid)
+                board["discovered"] += 1
+            elif action == "link":
+                primary = board["primary"]
+                if cid not in primary and (any(cid in by_id[p]["contradicts"] for p in primary)
+                                           or set(primary).intersection(claim["contradicts"])):
+                    board["linked"].append(cid)
+                board["link_cursor"] += 1
+            else:
+                index = board["citation_cursor"]
+                citation = support(root, sources, limit, claim["evidence"][index])
+                if index == 0:
+                    board["checks"].append({**claim_view(claim), "support": []})
+                board["checks"][-1]["support"].append(citation)
+                board["citation_cursor"] += 1
+                if board["citation_cursor"] == len(claim["evidence"]):
+                    board["claim_cursor"] += 1
+                    board["citation_cursor"] = 0
+            board["spent"] += 1
+            plan_goal(board, claims, model["questions"])
+            write(target, board)
+        return goal_result(board)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", action="version", version=VERSION)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("init", "inventory", "validate", "report", "search", "show", "apply"):
+    for name in ("init", "inventory", "validate", "report", "search", "show", "apply", "trace", "goal-start", "goal-run", "goal-show"):
         sub = commands.add_parser(name)
         sub.add_argument("workspace")
         if name == "init":
@@ -455,6 +701,17 @@ def main(argv=None):
             sub.add_argument("--end", type=int, default=40)
         elif name == "apply":
             sub.add_argument("proposal")
+        elif name == "trace":
+            sub.add_argument("record_id")
+        elif name.startswith("goal-"):
+            sub.add_argument("name")
+            if name == "goal-start":
+                sub.add_argument("entity")
+                sub.add_argument("question")
+                sub.add_argument("--predicate", action="append", default=[])
+                sub.add_argument("--budget", required=True, type=int, choices=range(1, GOAL_MAX_UNITS + 1), metavar="1..200")
+            elif name == "goal-run":
+                sub.add_argument("--steps", required=True, type=int, choices=range(1, GOAL_MAX_UNITS + 1), metavar="1..200")
     args = parser.parse_args(argv)
     try:
         if args.command == "init":
@@ -465,10 +722,24 @@ def main(argv=None):
             result = show(args.workspace, args.source_id, args.start, args.end)
         elif args.command == "apply":
             result = apply(args.workspace, args.proposal)
+        elif args.command == "trace":
+            result = trace(args.workspace, args.record_id)
+        elif args.command == "goal-start":
+            result = goal_start(args.workspace, args.name, args.entity, args.question, args.budget, args.predicate)
+        elif args.command == "goal-run":
+            result = goal_run(args.workspace, args.name, args.steps)
+        elif args.command == "goal-show":
+            result = goal_show(args.workspace, args.name)
         else:
             result = {"inventory": inventory, "validate": validate, "report": report}[args.command](args.workspace)
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0 if result.get("valid", True) else 1
+    except KeyboardInterrupt:
+        message = "Interrupted"
+        if args.command == "goal-run":
+            message += "; use goal-show and goal-run to resume from the last committed work unit"
+        print(json.dumps({"error": message}), file=sys.stderr)
+        return 130
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(json.dumps({"error": str(exc), "type": type(exc).__name__}), file=sys.stderr)
         return 1

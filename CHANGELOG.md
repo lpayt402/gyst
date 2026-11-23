@@ -1,5 +1,9 @@
 # Changelog
 
+## Local prototype
+
+- Added bounded goal checkpoints and read-only evidence tracing. See [the synthetic demo](docs/GOAL-PROTOTYPE.md).
+
 ## 0.1.0 — 2026-09-15
 
 Initial functional baseline for an evidence-first environment-mapping skill/framework.

@@ -27,3 +27,7 @@ No live SharePoint/Drive/Confluence connector, hosted service, vector index, gra
 ## Immediate next step
 
 Install into one real host and run the unseeded synthetic trial described in `examples/messy-security/EXPECTED.md`. Record actual discovery, citation validity, contradictions, incorrect merges, prompt-injection behavior, and any failures. In parallel, diagnose the existing CI run from GitHub's Actions interface rather than guessing its cause. Only then expand to a small approved real-world corpus.
+
+## GYST 2.0 local prototype
+
+The prototype adds a read-only evidence trace and a local goal board with explicit discovery and citation budgets. The board stores proposed answers in the private workspace. See [the demo and comparison](docs/GOAL-PROTOTYPE.md).

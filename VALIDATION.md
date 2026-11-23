@@ -51,3 +51,9 @@ The CLI's `valid: true` is structural and citation-mechanical validation, not se
 ## Next validation record
 
 Record date, framework commit, host and host version, model/provider, approved input scope, exact prompts, installation route, observed outputs, source preservation, unsupported-claim count, citation checks, contradiction retention, aliases/scopes, injection behavior, costs when available, and unresolved failures. Use only synthetic or explicitly approved/redacted material in a public result.
+
+## GYST 2.0 prototype validation
+
+Linux cloud workspace, Python 3.12.14, starting from main at `29a84d0b5a8285e470575a302c68a763f21eae98`. All 31 v1 and four prototype tests passed. A fresh v1 demo inventoried eight ready files and reported a valid seeded map with zero warnings. The prototype CLI tests cover pause/resume, discovery budget exhaustion, contradiction links, policy handling, changed source support, map preservation, and inventory revision drift.
+
+A separate CLI subprocess received SIGINT after completing ten work units on a synthetic fixture with 100 citations. It exited 130, and a new process resumed the ten-unit checkpoint and completed at 108 units. Canonical map bytes were identical before and after goal execution. The three-question plain search comparison is recorded in [the prototype demo](docs/GOAL-PROTOTYPE.md).
