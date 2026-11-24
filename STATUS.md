@@ -1,6 +1,6 @@
 # GYST status
 
-**Version: 0.1.0 — September 15, 2026. Ready for a controlled synthetic-data pilot.**
+**Runtime version 0.1.0 with a bounded document investigation prototype. Ready for a controlled synthetic-data pilot.**
 
 ## Implemented
 
@@ -10,13 +10,13 @@ The standard-library Python runtime provides workspace initialization, bounded r
 
 Distribution includes Claude Code plugin/marketplace manifests, Codex skill metadata, and a dry-run-first user/project installer for either or both hosts. The installer preserves unrelated configuration and refuses unowned or locally modified installations. `INSTALL.md` is the entrypoint for an agent receiving the repository link.
 
-A six-file fictional environment, seeded pipeline demo, unseeded evaluation rubric, and 31 deterministic tests are included. Local tests passed; see `VALIDATION.md` for the exact boundary of that result.
+The eight-file fictional BenchBoard environment supports a seeded pipeline demo and a separate unseeded evaluation. The November 23 prototype adds read-only evidence tracing and a resumable goal board with explicit discovery and citation budgets. Proposed answers stay in the private workspace. See the [demo and comparison](docs/GOAL-PROTOTYPE.md).
 
 ## Not yet verified
 
 Live Claude Code plugin discovery, live Codex skill discovery, end-to-end agent behavior, and unseeded extraction quality have not been tested in their native hosts. No production readiness or benchmark claim is made.
 
-The initial six-job GitHub Actions run failed and exposed no usable diagnostic log through the available connector. The cause has not been established. Local Linux execution passed; Windows/macOS and the configured Python 3.10/3.12 matrix remain unverified. Do not interpret the workflow file as evidence those jobs passed.
+The November 23 main run passed all four Ubuntu and Windows jobs. Both macOS jobs failed in the goal tests because their fixture paths used the `/var` symlink. The fixture now uses a physical path and the runtime still rejects linked workspaces. The full suite passed on Linux with both ordinary and symlinked temporary parents. Hosted verification of the fix is pending. The matrix still targets Ubuntu, Windows, and macOS on Python 3.10 and 3.12. [Main run](https://github.com/lpayt402/gyst/actions/runs/45254102161).
 
 ## Deliberate v0.1 limits
 
@@ -26,8 +26,4 @@ No live SharePoint/Drive/Confluence connector, hosted service, vector index, gra
 
 ## Immediate next step
 
-Install into one real host and run the unseeded synthetic trial described in `examples/messy-security/EXPECTED.md`. Record actual discovery, citation validity, contradictions, incorrect merges, prompt-injection behavior, and any failures. In parallel, diagnose the existing CI run from GitHub's Actions interface rather than guessing its cause. Only then expand to a small approved real-world corpus.
-
-## GYST 2.0 local prototype
-
-The prototype adds a read-only evidence trace and a local goal board with explicit discovery and citation budgets. The board stores proposed answers in the private workspace. See [the demo and comparison](docs/GOAL-PROTOTYPE.md).
+Install into one real host and run the [unseeded synthetic trial](examples/access-review/EXPECTED.md). Record discovery, citation validity, contradictions, incorrect merges, prompt-injection behavior, and any failures before expanding the pilot.

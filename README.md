@@ -39,10 +39,10 @@ Then invoke `$gyst`. A cross-platform installer is also included for user or pro
 | Layer | Included now |
 | --- | --- |
 | Agent skill | Bounded mapping passes, scoped entity resolution, contradiction handling, targeted interviews, checkpoint/resume guidance, and cited natural-language answers |
-| Local runtime | `init`, `inventory`, `search`, `show`, `validate`, `apply`, and `report` commands; source hashes; duplicate detection; historical snapshots; stale-evidence warnings |
+| Local runtime | `init`, `inventory`, `search`, `show`, `validate`, `apply`, and `report` commands; source hashes; duplicate detection; historical snapshots; stale-evidence warnings; bounded goals and claim tracing |
 | Domain packs | Generic, cybersecurity, software product, and business operations vocabularies and questions |
 | Installation | Self-contained Agent Skills directory, Claude Code plugin/marketplace manifests, Codex metadata, safe copy installer, and manual fallback |
-| Evaluation | Synthetic messy environment, seeded plumbing demo, unseeded agent evaluation rubric, and 31 deterministic tests |
+| Evaluation | Synthetic messy environment, seeded plumbing demo, unseeded agent evaluation rubric, and deterministic CLI and installer tests |
 
 What is **not** included: a standalone LLM service, live SharePoint/Drive/wiki connectors, automatic Office/PDF extraction, a vector database, an interactive graph UI, per-user authorization, or a background monitor. Those are explicit extension points, not implied capabilities.
 
@@ -77,9 +77,11 @@ GYST should say **"No owner is documented in the reviewed sources"**, not **"The
 
 ## Try the example without real data
 
-From a checkout with Python 3.10 or newer:
+Clone the public repository and enter the lowercase checkout directory. Use Python 3.10 or newer.
 
 ```bash
+git clone https://github.com/lpayt402/gyst.git
+cd gyst
 python3 -m unittest discover -s tests -v
 python3 examples/demo.py --workspace ../gyst-demo
 ```
@@ -91,12 +93,14 @@ On Windows, use `py -3` instead of `python3`. The demo requires a new or empty o
 From a Bash shell at the repository root, use a fresh workspace with the same fictional BenchBoard records:
 
 ```bash
-w=$(mktemp -d)
+demo_dir=$(mktemp -d)
+w=$(cd "$demo_dir" && pwd -P)
 python3 examples/demo.py --workspace "$w"
 gyst() { python3 skills/gyst/scripts/gyst.py "$@"; }
 gyst goal-start "$w" review ent-benchboard "Was the shared account retired?" --budget 9
 gyst goal-run "$w" review --steps 4
 gyst goal-run "$w" review --steps 9
+gyst goal-show "$w" review
 gyst trace "$w" clm-exception-decision
 ```
 
@@ -109,7 +113,7 @@ The included helper reads and writes local files and does not call a model, conn
 ## Where everything lives
 
 ```text
-GYST/                         # Framework repository; no real organizational data
+gyst/                         # Framework repository; no real organizational data
 ├── INSTALL.md                # Link-to-install playbook
 ├── AGENTS.md                 # Instructions for developing this framework
 ├── install.py                # Dry-run-first standalone installer

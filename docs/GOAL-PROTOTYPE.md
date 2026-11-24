@@ -9,9 +9,14 @@ The caller supplies the question, a canonical entity ID, and optionally exact pr
 From the repository root in Bash, using Python 3.10 or newer:
 
 ```bash
-w=$(mktemp -d)
+demo_dir=$(mktemp -d)
+w=$(cd "$demo_dir" && pwd -P)
 gyst() { python3 skills/gyst/scripts/gyst.py "$@"; }
 python3 examples/demo.py --workspace "$w"
+gyst inventory "$w"
+gyst validate "$w"
+gyst report "$w"
+gyst search "$w" "EX-041" --limit 3
 before=$(git hash-object "$w/map/knowledge.json")
 gyst trace "$w" clm-exception-decision
 
@@ -24,11 +29,14 @@ gyst goal-show "$w" review
 printf '\nSynthetic revision added after inventory.\n' >> "$w/inbox/handoff-2026.md"
 gyst goal-run "$w" review --steps 9
 gyst trace "$w" clm-exception-decision
+gyst goal-show "$w" review
 test "$before" = "$(git hash-object "$w/map/knowledge.json")"
 
 gyst goal-start "$w" tiny ent-benchboard "Find retirement evidence" --budget 2
 gyst goal-run "$w" tiny --steps 200
 ```
+
+See the [sample output](../examples/goal-demo-output.md) for selected fields from this run. The script uses the physical temporary path so operating-system aliases such as macOS’s `/var` do not trip the runtime’s link checks.
 
 At four units the board has inspected all three claims and one possible contradiction. Its next step is to check the next claim for a contradiction in either direction. A separate process resumes the checkpoint. Ctrl-C during `goal-run` returns 130. Rerun the same command to continue from the last atomically saved work unit. After a hard kill, check for a live writer before following the existing workspace lock recovery message.
 

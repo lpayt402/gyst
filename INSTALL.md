@@ -7,7 +7,7 @@ Choose one route for the current host. Preserve existing skills, instructions, p
 ## Link-to-install protocol for agents
 
 1. Read this file, `skills/gyst/SKILL.md`, and the relevant manifest/installer before running anything. Confirm the requested scope; an explicit user-scope request is already authorization to install there. When no scope was given, use an identified trusted project directory; ask one question only if no target can be resolved.
-2. Obtain an authenticated checkout using the user's existing Git/GitHub connection. Never request that they paste a token into chat or put a token in a remote URL. Do not make a private repository public. Record the fetched commit; pin a reviewed commit for repeatable deployments. Reuse an existing checkout only after inspecting its status and remote; never reset local work.
+2. Clone the public repository. Use the user's existing Git/GitHub connection if authentication is needed. Never request that they paste a token into chat or put a token in a remote URL. Do not make a private repository public. Record the fetched commit; pin a reviewed commit for repeatable deployments. Reuse an existing checkout only after inspecting its status and remote; never reset local work.
 3. Prefer the host-native route below, or run `install.py` first without `--apply` and then with `--apply` for the already authorized installation. Do not run two installation methods for the same host. Existing unowned/modified installations must be reconciled, not deleted or overwritten.
 4. Verify the installed `SKILL.md`, bundled references, schema, and script. Run the installed script's `--version` when Python is present, then confirm discovery in the host. A successful file copy is not proof of host discovery. Report exact location, source commit, invocation syntax, and any unverified step.
 5. Stop. Source scope and model/data approval are separate from installation. Do not initialize a real environment, crawl a share, or run a mapping pass just because installation succeeded.
@@ -51,7 +51,7 @@ In a Codex host that exposes `$skill-installer`:
 $skill-installer install the skill at https://github.com/lpayt402/gyst/tree/main/skills/gyst
 ```
 
-Specify a reviewed commit instead of `main` for a pinned deployment. Use existing authorized Git credentials for this private repository. The whole `skills/gyst` directory is required; copying only `SKILL.md` loses the schema, references, and runtime.
+Specify a reviewed commit instead of `main` for a pinned deployment. The whole `skills/gyst` directory is required; copying only `SKILL.md` loses the schema, references, and runtime.
 
 Then invoke:
 
@@ -69,7 +69,7 @@ From the parent directory where you want a framework checkout:
 
 ```bash
 git clone https://github.com/lpayt402/gyst.git
-cd GYST
+cd gyst
 python3 install.py --agent both --scope user
 python3 install.py --agent both --scope user --apply
 ```
@@ -78,7 +78,7 @@ On Windows PowerShell:
 
 ```powershell
 git clone https://github.com/lpayt402/gyst.git
-Set-Location GYST
+Set-Location gyst
 py -3 install.py --agent both --scope user
 py -3 install.py --agent both --scope user --apply
 ```

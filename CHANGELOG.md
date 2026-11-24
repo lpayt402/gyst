@@ -2,6 +2,8 @@
 
 ## Local prototype
 
+- Use physical temporary paths in the goal test fixtures and demo instructions, and document the full seeded CLI walkthrough.
+
 - Added bounded goal checkpoints and read-only evidence tracing. See [the synthetic demo](docs/GOAL-PROTOTYPE.md).
 
 ## 0.1.0 — 2026-09-15

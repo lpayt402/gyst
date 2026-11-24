@@ -17,7 +17,8 @@ class GoalTests(unittest.TestCase):
     def setUp(self):
         folder = tempfile.TemporaryDirectory()
         self.addCleanup(folder.cleanup)
-        self.work = Path(folder.name)
+        # macOS temporary paths can be rooted at the /var symlink.
+        self.work = Path(folder.name).resolve()
         subprocess.run(
             [sys.executable, str(ROOT / "examples/demo.py"), "--workspace", str(self.work)],
             check=True, capture_output=True,
@@ -57,6 +58,46 @@ class GoalTests(unittest.TestCase):
         self.assertIn("Implementation remains unverified", answer["summary"])
         self.assertTrue(any("retired or replaced" in q for q in answer["unresolved"]))
         self.assertEqual(hashlib.sha256(self.map.read_bytes()).hexdigest(), self.initial)
+
+    def test_seeded_cli_workflow(self):
+        self.assertEqual(self.cli("inventory")["status_counts"], {"ready": 8})
+        validation = self.cli("validate")
+        self.assertTrue(validation["valid"])
+        self.assertEqual(validation["warnings"], [])
+        report = self.cli("report")
+        self.assertIn("clm-mfa-required", Path(report["report"]).read_text(encoding="utf-8"))
+        hits = self.cli("search", "EX-041", "--limit", "3")["hits"]
+        self.assertTrue(hits)
+        self.assertTrue(any(hit["path"] == "access-policy.md" for hit in hits))
+        self.assertEqual(len(self.cli("trace", "clm-exception-decision")["claims"]), 2)
+        started = self.cli("goal-start", "happy", ENTITY, QUESTION, "--budget", "9")
+        self.assertEqual(started["board"]["spent"], 0)
+        self.assertEqual(self.cli("goal-run", "happy", "--steps", "4")["status"], "paused")
+        answer = self.cli("goal-run", "happy", "--steps", "9")
+        self.assertEqual(answer["status"], "completed")
+        self.assertEqual(answer, self.cli("goal-show", "happy"))
+        self.assertEqual(answer["board"]["spent"], 9)
+        self.assertEqual(len(answer["answer"]["findings"]), 3)
+        self.assertTrue(all(
+            citation["status"] == "citation_verified"
+            for finding in answer["answer"]["findings"]
+            for citation in finding["support"]
+        ))
+        self.assertEqual(hashlib.sha256(self.map.read_bytes()).hexdigest(), self.initial)
+
+    def test_cli_rejects_aliased_workspace(self):
+        with tempfile.TemporaryDirectory() as folder:
+            alias = Path(folder).resolve() / "alias"
+            try:
+                alias.symlink_to(self.work, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("Directory symlinks are unavailable on this host")
+            result = subprocess.run(
+                [sys.executable, str(CLI), "trace", str(alias), "clm-exception-decision"],
+                text=True, capture_output=True, check=False,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Link/junction paths are not allowed", json.loads(result.stderr)["error"])
 
     def test_discovery_counts_toward_budget(self):
         self.cli("goal-start", "tiny", ENTITY, QUESTION, "--budget", "2")
