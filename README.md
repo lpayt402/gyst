@@ -1,6 +1,10 @@
 # GYST: Make sense of scattered documents
 
-GYST supports reviewing a policy, an old wiki page, a ticket export, and a handoff note when they do not quite agree. It helps keep those sources intact, map what each one says, and list the questions that still need an answer. It does not decide which source is authoritative on its own.
+[![Tests on main](https://github.com/lpayt402/gyst/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/lpayt402/gyst/actions/workflows/tests.yml?query=branch%3Amain)
+
+GYST helps teams turn scattered policies, wiki pages, and tickets into a map of what the evidence supports, where sources disagree, and what still needs an answer. It keeps the original records intact and separates what a policy requires from what anyone can show was implemented.
+
+[See the fictional BenchBoard overview and run the demo](#try-the-example-without-real-data).
 
 **v0.1.0. Working skill and local helpers, not an autonomous hosted platform.** Your agent does the reasoning; the included code does inventory, retrieval, evidence checks, revision-controlled integration, and reporting. No database, API key, or additional Python package is required by the helpers.
 
@@ -76,6 +80,10 @@ Then ask normal questions:
 GYST should say **"No owner is documented in the reviewed sources"**, not **"There is no owner."** It should say **"The policy requires MFA"**, not **"MFA is definitely deployed."**
 
 ## Try the example without real data
+
+![Seeded GYST report with eight sources, two conflicting claims, and a policy requirement that does not prove MFA deployment](docs/images/gyst-seeded-overview.png)
+
+This overview comes from fictional Rivet & Root Bicycle Cooperative records for its BenchBoard system. The two source accounts disagree about an exception deadline, and there is a separate open question about implementation.
 
 Clone the public repository and enter the lowercase checkout directory. Use Python 3.10 or newer.
 

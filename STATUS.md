@@ -16,7 +16,9 @@ The eight-file fictional BenchBoard environment supports a seeded pipeline demo 
 
 Live Claude Code plugin discovery, live Codex skill discovery, end-to-end agent behavior, and unseeded extraction quality have not been tested in their native hosts. No production readiness or benchmark claim is made.
 
-The November 23 main run passed all four Ubuntu and Windows jobs. Both macOS jobs failed in the goal tests because their fixture paths used the `/var` symlink. The fixture now uses a physical path and the runtime still rejects linked workspaces. The full suite passed on Linux with both ordinary and symlinked temporary parents. Hosted verification of the fix is pending. The matrix still targets Ubuntu, Windows, and macOS on Python 3.10 and 3.12. [Main run](https://github.com/lpayt402/gyst/actions/runs/45254102161).
+## Hosted CLI verification
+
+The [November 24 fix-branch run](https://github.com/lpayt402/gyst/actions/runs/45403113637) at `5f7de991d2` passed unit tests and the seeded demo in all six jobs: Ubuntu, Windows, and macOS on Python 3.10 and 3.12. It verifies the physical-path fixture fix for the two macOS failures in the [November 23 main run](https://github.com/lpayt402/gyst/actions/runs/45254102161). The runtime still rejects linked workspace paths. The fix-branch run is not evidence of a green run on main; see the [default-branch workflow](https://github.com/lpayt402/gyst/actions/workflows/tests.yml?query=branch%3Amain) for its current status.
 
 ## Deliberate v0.1 limits
 
